@@ -1,5 +1,5 @@
 {
-  "name": "mern-proj-server",
+  "name": "mern-proj-api",
   "version": "0.1.0",
   "main": "server.js",
   "dependencies": {

@@ -1,4 +1,5 @@
-//
+const path = require('path');
+
 const errorHandler = (error, req, res, next) => {
   const status = error.statusCode || 500;
 
@@ -11,6 +12,14 @@ const errorHandler = (error, req, res, next) => {
 
   console.error('| ==--- MyErrorStack ---== |:', error.stack);
   // console.log({error})
+
+  // if 'html'
+  if (req.accepts('html')) {
+    if (error.statusCode === 404) {
+      return res.sendFile(path.join(__dirname, '..', 'views', '404.html'));
+    }
+    return res.sendFile(path.join(__dirname, '..', 'views', '500.html'));
+  }
 
   // sent to default express errorHandler
   // can trigger if two res. ex. res.render() and res.json()
@@ -27,11 +36,11 @@ const errorHandler = (error, req, res, next) => {
     });
   }
 
-  // if(error.statusCode === 400){
-  //   return res.status(400).json({
-  //     error: `${error.name} : ${error.message}`
-  //   })
-  // }
+  if (error.statusCode === 400) {
+    return res.status(400).json({
+      error: `${error.name} : ${error.message}`
+    });
+  }
 
   //  if(error.statusCode === 401){
   //   return res.status(401).json({

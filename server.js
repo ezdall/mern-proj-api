@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 
 const { connectMDB } = require('./config/db');
+const { errorHandler } = require('./helpers/error-handler');
 
 dotenv.config({
   path: './config/config.env'
@@ -26,11 +27,12 @@ app.use('/api', (req, res) => {
   return res.json('hi world');
 });
 
-app.all('*', (req, res) => {
-  return res.json('error path');
+app.all('*', (req, res, next) => {
+  return next();
 });
 
-// app.use()
+app.use(errorHandler);
+
 mongoose.connection.once('open', () => {
   app.listen(PORT, err => {
     if (err) throw err;

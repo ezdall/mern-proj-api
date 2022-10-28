@@ -13,6 +13,7 @@ const { errorHandler } = require('./helpers/error-handler');
 const { UrlError } = require('./helpers/url.error');
 
 const { rootRoute } = require('./routes');
+const { userRoute } = require('./routes/user.route');
 
 dotenv.config({
   path: './config/config.env'
@@ -35,9 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/', rootRoute);
 
-app.use('/api', (req, res) => {
-  return res.json('hi world');
-});
+app.use('/api', [userRoute]);
 
 app.all('*', (req, res, next) => {
   const error = new UrlError(`${req.ip} tried to access ${req.originalUrl}`);

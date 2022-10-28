@@ -1,12 +1,16 @@
 const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
+const fs = require('fs');
 const path = require('path');
 const morgan = require('morgan');
 
 const { connectMDB } = require('./config/db');
 const { errorHandler } = require('./helpers/error-handler');
+const { logger } = require('./middlewares/logger');
+
 const { rootRoute } = require('./routes');
+const { UrlError } = require('./helpers/url.error');
 
 dotenv.config({
   path: './config/config.env'
@@ -19,6 +23,7 @@ const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
 app.use(morgan('dev'));
+// app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -31,7 +36,9 @@ app.use('/api', (req, res) => {
 });
 
 app.all('*', (req, res, next) => {
-  return next('a');
+  const error = new UrlError(`${req.ip} tried to access ${req.originalUrl}`);
+
+  return next(error);
 });
 
 app.use(errorHandler);

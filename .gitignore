@@ -24,6 +24,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # my
+logs
 .eslintrc.json
 note.txt
 .env.dev.local

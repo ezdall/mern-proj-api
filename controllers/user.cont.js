@@ -10,8 +10,6 @@ const Note = require('../models/note.model')
 const { NotFoundError } = require('../helpers/not-found.error');
 const { BadRequestError } = require('../helpers/bad-request.error');
 
-
-
 /**
  * @desc GET all users
  * @route GET /api/users/
@@ -114,15 +112,25 @@ const updateUser = async (req, res, next) => {
       return next(new NotFoundError('Not found users @updateUser'))
     }
 
+    if(password){
+     const salt = await genSalt()
+     
+     user.password = await hash(password, salt)
+    }
+     
+    user.username = username || user.username;
+    user.roles = roles?.length ? roles : user.roles;
+    user.active = active ?? user.active
+
     // merge + save, the "id" wont enter anyway
-    const updatedUser = await (_.extend(user, req.body)).save()
+    const updatedUser = await user.save()
 
     // 
     updatedUser.password = undefined;
     updatedUser.salt = undefined
 
     // no await?
-    return res.json(updatedUser);
+    return res.json({user: updatedUser});
   } catch (error) {
     return next(error);
   }
@@ -143,27 +151,23 @@ const deleteUser = async (req, res, next) => {
 
     const { id } = req.body
 
-    console.log(mongoose.isValidObjectId(id))
-
-
-  
     if(!id || !mongoose.isValidObjectId(id)){
       return next(new BadRequestError('valid id is required'))
+    }
+
+    // find note's user
+    // ref:'user', type:ObjectId
+    const note = await Note.findOne({ user: id }).lean().exec()
+
+    // dont delete user with notes
+    if(note){
+      return next(new BadRequestError('this user has notes!'))
     }
 
     const user = await User.findById(id).exec()
 
     if(!user){
        return next(new NotFoundError('user not found'))
-    }
-
-    // find note's user
-    // ref:'user', type:ObjectId
-    const notes = await Note.findOne({ user: id }).lean().exec()
-
-    // dont delete user with notes
-    if(notes?.length){
-      return next(new BadRequestError('this user has notes!'))
     }
 
     // delete itself
@@ -183,7 +187,6 @@ const deleteUser = async (req, res, next) => {
 const userById = async (req, res, next, userId) => {
   // 4th is params??
   try {
-    // console.log('userId is Valid?:', mongoose.isValidObjectId(userId));
 
     // console.log('arg:', userId);
     const user = await User.findById(userId)

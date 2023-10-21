@@ -1,11 +1,12 @@
 const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
-const morgan = require('morgan');
 const path = require('path');
+const morgan = require('morgan');
 
 const { connectMDB } = require('./config/db');
 const { errorHandler } = require('./helpers/error-handler');
+const { rootRoute } = require('./routes');
 
 dotenv.config({
   path: './config/config.env'
@@ -21,14 +22,16 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use('/', express.static(path.join(__dirname, 'views')));
+// app.use('/', express.static(path.join(__dirname, 'views')));
+
+app.use('/', rootRoute);
 
 app.use('/api', (req, res) => {
   return res.json('hi world');
 });
 
 app.all('*', (req, res, next) => {
-  return next();
+  return next('a');
 });
 
 app.use(errorHandler);
@@ -36,7 +39,6 @@ app.use(errorHandler);
 mongoose.connection.once('open', () => {
   app.listen(PORT, err => {
     if (err) throw err;
-
     console.log(`MERN-Proj Server is running on http://localhost:${PORT}`);
   });
 });

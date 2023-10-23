@@ -12,6 +12,7 @@ const userSchema = new Schema(
       trim: true,
       minlength: 1,
       maxlength: 32,
+      unique: true,
       required: true
     },
     

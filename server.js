@@ -1,16 +1,18 @@
 const dotenv = require('dotenv');
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const morgan = require('morgan');
 
 const { connectMDB } = require('./config/db');
-const { errorHandler } = require('./helpers/error-handler');
+const { corsOptions } = require('./config/cors-options');
 const { logger } = require('./middlewares/logger');
+const { errorHandler } = require('./helpers/error-handler');
+const { UrlError } = require('./helpers/url.error');
 
 const { rootRoute } = require('./routes');
-const { UrlError } = require('./helpers/url.error');
 
 dotenv.config({
   path: './config/config.env'
@@ -22,10 +24,12 @@ const app = express();
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
+/** middlewares ----------------------------*/
+app.use(cors(corsOptions));
 app.use(morgan('dev'));
 // app.use(logger);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json()); // bodyParser
+app.use(express.urlencoded({ extended: true }));
 
 // app.use('/', express.static(path.join(__dirname, 'views')));
 
@@ -38,6 +42,7 @@ app.use('/api', (req, res) => {
 app.all('*', (req, res, next) => {
   const error = new UrlError(`${req.ip} tried to access ${req.originalUrl}`);
 
+  // no need to log
   return next(error);
 });
 

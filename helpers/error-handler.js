@@ -70,6 +70,12 @@ const errorHandler = (error, req, res, next) => {
     console.log('--Mongoose Error--');
   }
 
+  if (error.name === 'UrlError'){
+    return res.status(404).json({
+      error: `cannot do ${req.method} on ${req.url}`
+    })
+  }
+
   // bad request
   if (error.statusCode === 400) {
     return res.status(400).json({
@@ -79,7 +85,7 @@ const errorHandler = (error, req, res, next) => {
 
   if (error.statusCode === 404) {
     return res.status(404).json({
-      error: `${error.name} : Not Found`
+      error: `${error.name} : ${error.message}`
     });
   }
 

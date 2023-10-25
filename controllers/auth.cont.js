@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const expressJwt = require('express-jwt')
 const { compare } = require('bcrypt');
 const _ = require('lodash');
 
@@ -11,6 +12,7 @@ const Note = require('../models/note.model');
 const { NotFoundError } = require('../helpers/not-found.error');
 const { BadRequestError } = require('../helpers/bad-request.error');
 const { UnauthorizedError } = require('../helpers/unauthorized.error')
+const { ForbiddenError } = require('../helpers/forbidden.error')
 
 /**
  * @desc Login
@@ -48,13 +50,11 @@ const login = async (req, res, next) =>{
 
     // generate a access token 
     const accessToken = jwt.sign({ 
-    		UserInfo: {
-    			username: user.username,
-    			roles: user.roles
-    		} 
+  			username: user.username,
+  			roles: user.roles
     	}, 
   	  process.env.ACCESS_SECRET,
- 	   { expiresIn: '1hr' }
+ 	   { expiresIn: '1h' }
     );
 
     // generate refresh token
@@ -94,8 +94,37 @@ const refresh = (req, res, next) => {
 
 const { cookies } = req
 
-	console.log(cookies)
-return res.json('refresh')
+if(!cookies?.jwt) return next(new UnauthorizedError('Unauthorized!..'))
+
+const refreshToken = cookies.jwt
+
+jwt.verify(
+	refreshToken,
+	process.env.REFRESH_SECRET,
+	async (err, decoded) => {
+		if(err) return next(new ForbiddenError('Forbidden!..'))
+
+			const foundUser = await User.findOne({ username: decoded?.username }).exec()
+
+		if(!foundUser) return next(new UnauthorizedError('Unauthorized!..'))
+		
+		const accessToken = jwt.sign({
+			username: foundUser.username,
+			roles: foundUser.roles
+		},
+		 process.env.ACCESS_SECRET,
+ 	   { expiresIn: '1h' }
+		);
+	// strip
+	 foundUser.password = undefined;
+	 foundUser.salt = undefined
+
+	  return res.json({ accessToken, user: foundUser.toObject()})
+
+	 }
+	)
+	
+return res.json(refreshToken)
 }
 
 /**
@@ -121,4 +150,12 @@ const logout = async (req, res, next) =>{
 	}
 }
 
-module.exports = { login, logout, refresh }
+// checks and decoder of "Bearer xxx" req.headers.authorization
+// then "Mount" data to req.auth
+const requireLogin = expressJwt({
+	secret: process.env.ACCESS_SECRET,
+	algorithms: ['HS256'],
+	requestProperty: 'auth'
+})
+
+module.exports = { login, logout, refresh, requireLogin }

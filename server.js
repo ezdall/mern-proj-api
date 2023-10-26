@@ -1,5 +1,7 @@
-const dotenv = require('dotenv');
 require('express-async-errors');
+require('dotenv').config({
+  path: './config/config.env'
+});
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -19,10 +21,6 @@ const { rootRoute } = require('./routes');
 const { userRoute } = require('./routes/user.route');
 const { noteRoute } = require('./routes/note.route')
 const { authRoute } = require('./routes/auth.route')
-
-dotenv.config({
-  path: './config/config.env'
-});
 
 connectMDB().catch(err => console.error('connect-MongoDB Error', err.stack));
 

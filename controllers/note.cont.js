@@ -3,7 +3,7 @@ const _ = require('lodash');
 
 // model
 const User = require('../models/user.model');
-const Note = require('../models/note.model')
+const Note = require('../models/note.model');
 
 // helper
 const { NotFoundError } = require('../helpers/not-found.error');
@@ -16,45 +16,44 @@ const { BadRequestError } = require('../helpers/bad-request.error');
  */
 
 const createNote = async (req, res, next) => {
-  try{
+  try {
     // for-now, user is from req.body
     // vs from req.auth
-    const { title, text, user: userId }  = req.body
+    const { title, text, user: userId } = req.body;
 
     // const username = req.profile
 
     // confirm if user is ObjectId
 
-    // do login first, 
+    // do login first,
     // de-mount req.user / req.profile
     // get ObjectId of user
-    const user = await User.findById(userId).lean().exec()
+    const user = await User.findById(userId).lean().exec();
 
-    if(!user){
-      return next(new NotFoundError('User not found'))
+    if (!user) {
+      return next(new NotFoundError('User not found'));
     }
 
     // confirm data
-    if(!title || !text){
-     	return next(new BadRequestError('all info required'))
+    if (!title || !text) {
+      return next(new BadRequestError('all info required'));
     }
 
     // spread, ObjectId as user
-    const note = await Note.create({ title, text, user: userId })
+    const note = await Note.create({ title, text, user: userId });
 
-  // check if created, 201
-  if(!note){
-    // if error occur at database
-    return next(new BadRequestError('invalid note'))
+    // check if created, 201
+    if (!note) {
+      // if error occur at database
+      return next(new BadRequestError('invalid note'));
+    }
+
+    // created
+    return res.status(201).json({ msg: note });
+  } catch (err) {
+    return next(err);
   }
-
-  // created
-  return res.status(201).json({ msg: note })
-
-  } catch(err){
-    return next(err)
-  }
-}
+};
 
 /**
  * @desc GET all users
@@ -65,20 +64,26 @@ const createNote = async (req, res, next) => {
 const noteList = async (req, res, next) => {
   try {
     // populate 'user', select: 'username'
-    const notes = await Note.find().populate({
-      path: 'user', select:'username'
-    }).lean().exec()
+    const notes = await Note.find()
+      .populate({
+        path: 'user',
+        select: 'username'
+      })
+      .lean()
+      .exec();
 
     // !notes?.length - new syntax nodejs-14+
-    if(!notes?.length){
-      return next(new NotFoundError('no notes'))
+    if (!notes?.length) {
+      return next(new NotFoundError('no notes'));
     }
+
+    console.log({ notes });
 
     return res.json(notes);
   } catch (error) {
     return next(error);
   }
-}
+};
 
 // view Note
 const readNote = async (req, res, next) => {
@@ -101,40 +106,38 @@ const readNote = async (req, res, next) => {
  */
 const updateNote = async (req, res, next) => {
   try {
-    
     // current note, de-mount deq.note from noteById
-    
-    const { id } = req.body
+
+    const { id } = req.body;
 
     // let note = req.note
 
     // console.log(req.body)
     // console.log(req.note)
 
-    if(!id || !mongoose.isValidObjectId(id)){
-      return next(new BadRequestError('valid id is required'))
+    if (!id || !mongoose.isValidObjectId(id)) {
+      return next(new BadRequestError('valid id is required'));
     }
 
-    let note = await Note.findById(id).exec()
-    
-    if(!note){
-      return next(new NotFoundError('note not found!'))
+    let note = await Note.findById(id).exec();
+
+    if (!note) {
+      return next(new NotFoundError('note not found!'));
     }
 
     note = _.extend(note, req.body);
 
-    const { title, text, completed } = note
+    const { title, text, completed } = note;
 
     // confirm field
-    if(!title || !text || typeof completed !== 'boolean'){
-      return next(new BadRequestError('all valid field is required'))
+    if (!title || !text || typeof completed !== 'boolean') {
+      return next(new BadRequestError('all valid field is required'));
     }
 
     // save update
-    const updateNote = await note.save()
+    const updateNote = await note.save();
 
-    return res.json({ msg: `${updateNote.title} updated!`})
-
+    return res.json({ msg: `${updateNote.title} updated!` });
   } catch (error) {
     return next(error);
   }
@@ -146,31 +149,29 @@ const updateNote = async (req, res, next) => {
  * @access Private
  */
 
- const deleteNote = async (req, res, next) => {
-
-  try{
+const deleteNote = async (req, res, next) => {
+  try {
     // de-mount
     // const note = req.note
 
-    const { id } = req.body
+    const { id } = req.body;
 
-    if(!id){
-    	return next(new BadRequestError('id is required'))
+    if (!id) {
+      return next(new BadRequestError('id is required'));
     }
 
-    const note = await Note.findById(id).exec()
+    const note = await Note.findById(id).exec();
     // delete note itself
-    const result = await note.deleteOne()
+    const result = await note.deleteOne();
 
-    console.log(result)
-    const reply = `Note ${result.title} w/ ID ${result._id} is deleted`
+    console.log(result);
+    const reply = `Note ${result.title} w/ ID ${result._id} is deleted`;
 
-    return res.json({ msg: reply })
-  } catch(err){
-
-    return next(err)
+    return res.json({ msg: reply });
+  } catch (err) {
+    return next(err);
   }
- }
+};
 
 // if you use url for id
 // :noteId --> req.note
@@ -183,11 +184,11 @@ const noteById = async (req, res, next, noteId) => {
     // console.log(req.params)
 
     // check if id's type is mongo-id
-    if(!mongoose.isValidObjectId(noteId)){
-      return next(new BadRequestError('invalid id'))
+    if (!mongoose.isValidObjectId(noteId)) {
+      return next(new BadRequestError('invalid id'));
     }
 
-    const note = await Note.findById(noteId).exec()
+    const note = await Note.findById(noteId).exec();
 
     // console.log('isMongooseObj(user)?:', isMongooseObj(note));
 
@@ -195,7 +196,7 @@ const noteById = async (req, res, next, noteId) => {
       // return res.status(400) ?? vs throw error?
       return next(new NotFoundError('Note doesnt exist'));
     }
- 
+
     // mount to req.note
     req.note = note;
 
@@ -207,5 +208,4 @@ const noteById = async (req, res, next, noteId) => {
   }
 };
 
-
-module.exports = { createNote, updateNote, deleteNote, noteList, noteById }
+module.exports = { createNote, updateNote, deleteNote, noteList, noteById };

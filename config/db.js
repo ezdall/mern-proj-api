@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 async function connectMDB() {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI_MERN_R, {
+    const conn = await mongoose.connect(process.env.MONGO_URI_MERN, {
       useNewUrlParser: true,
       useCreateIndex: true,
       useUnifiedTopology: true,

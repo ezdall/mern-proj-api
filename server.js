@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 
 const { connectMDB } = require('./config/db');
@@ -19,14 +19,14 @@ const { UrlError } = require('./helpers/url.error');
 
 const { rootRoute } = require('./routes');
 const { userRoute } = require('./routes/user.route');
-const { noteRoute } = require('./routes/note.route')
-const { authRoute } = require('./routes/auth.route')
+const { noteRoute } = require('./routes/note.route');
+const { authRoute } = require('./routes/auth.route');
 
 connectMDB().catch(err => console.error('connect-MongoDB Error', err.stack));
 
 const app = express();
 
-const PORT = parseInt(process.env.PORT, 10) || 3000;
+const PORT = process.env.PORT || 3000;
 
 /** middlewares ----------------------------*/
 app.use(cors(corsOptions));
@@ -34,9 +34,9 @@ app.use(morgan('dev'));
 // app.use(logger);
 app.use(express.json()); // bodyParser
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(cookieParser());
 
-// app.use('/', express.static(path.join(__dirname, 'views')));
+// app.use('/dist', express.static(path.join(__dirname, 'views')));
 
 app.use('/', rootRoute);
 

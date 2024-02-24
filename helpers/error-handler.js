@@ -11,8 +11,8 @@ const errorHandler = (error, req, res, next) => {
     console.error('| ==-- Error-Reason --== |:', errorReason);
   }
 
-  // console.error('| ==--- MyErrorStack ---== |:', error.stack);
-  console.log({ error });
+  console.error('| ==--- MyErrorStack ---== |:', error.stack);
+  // console.log({ error });
 
   logEvents(
     `${error.name ?? 'Error'}: ${error.message ?? ''}\t${req.method}\t${
@@ -70,10 +70,10 @@ const errorHandler = (error, req, res, next) => {
     console.log('--Mongoose Error--');
   }
 
-  if (error.name === 'UrlError'){
+  if (error.name === 'UrlError') {
     return res.status(404).json({
       error: `cannot do ${req.method} on ${req.url}`
-    })
+    });
   }
 
   // bad request

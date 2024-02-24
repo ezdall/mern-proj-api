@@ -1,6 +1,4 @@
-const express = require('express')
-const router = express.Router()
-
+const router = require('express').Router();
 
 const {
   userById,
@@ -10,21 +8,21 @@ const {
   deleteUser
 } = require('../controllers/user.cont');
 
+const { requireLogin } = require('../controllers/auth.cont');
 
-// GET
-router.get('/users', getAllUser)
+// middleware
+router.use(requireLogin);
 
-// POST
-router.post('/users', createUser)
+// route
+router
+  .route('/users')
+  .get(getAllUser)
+  .post(createUser)
+  .patch(updateUser)
+  .delete(deleteUser);
 
-// PATCH
-router.patch('/users', updateUser)
-
-// DELETE
-router.delete('/users', deleteUser)
-
-// param
-router.param('userId', userById);
+// if use url/params to mount data
+// router.param('userId', userById);
 
 //  mount
-module.exports = { userRoute: router};
+module.exports = { userRoute: router };

@@ -1,6 +1,6 @@
 {
   "name": "mern-proj-api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "server.js",
   "dependencies": {
     "bcrypt": "5.0.1",
@@ -33,7 +33,7 @@
     "dev": "nodemon server.js"
   },
   "engines": {
-    "node": "14.20.1"
+    "node": "16.20.2"
   },
   "keywords": [],
   "license": "MIT"

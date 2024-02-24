@@ -39,12 +39,14 @@ const getAllUser = async (req, res, next) => {
 // view User
 const readUser = async (req, res, next) => {
   try {
+
+    const user = req.profile.toObject()
     // remove sensitive info, double checking
-    req.profile.password = undefined;
-    req.profile.salt = undefined;
+    user.password = undefined;
+    user.salt = undefined;
 
     // no await?
-    return res.json({ user: req.profile.toObject() });
+    return res.json({ user });
   } catch (error) {
     return next(error);
   }
@@ -71,7 +73,7 @@ const createUser = async (req, res, next) => {
     const salt = await genSalt();
     const hashPass = await hash(password, salt) 
 
-    const user = await User.create({ username, roles, password: hashPass, salt }) // ??
+    const user = await User.create({ username, roles, password: hashPass, salt })
 
   // check if created 201
   if(!user){
@@ -124,6 +126,8 @@ const updateUser = async (req, res, next) => {
 
     // merge + save, the "id" wont enter anyway
     const updatedUser = await user.save()
+
+    // check updatedUser?
 
     // 
     updatedUser.password = undefined;
@@ -187,6 +191,9 @@ const deleteUser = async (req, res, next) => {
 const userById = async (req, res, next, userId) => {
   // 4th is params??
   try {
+
+    // req.param/s?
+    // [] check ObjectId
 
     // console.log('arg:', userId);
     const user = await User.findById(userId)

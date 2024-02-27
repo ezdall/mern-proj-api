@@ -2,7 +2,7 @@ const router = require('express').Router();
 
 const {
   userById,
-  getAllUser,
+  userList,
   createUser,
   updateUser,
   deleteUser
@@ -16,7 +16,7 @@ router.use(requireLogin);
 // route
 router
   .route('/users')
-  .get(getAllUser)
+  .get(userList)
   .post(createUser)
   .patch(updateUser)
   .delete(deleteUser);

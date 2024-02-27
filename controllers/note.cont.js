@@ -77,7 +77,7 @@ const noteList = async (req, res, next) => {
       return next(new NotFoundError('no notes'));
     }
 
-    console.log({ notes });
+    // console.log({ notes });
 
     return res.json(notes);
   } catch (error) {
@@ -178,14 +178,9 @@ const deleteNote = async (req, res, next) => {
 const noteById = async (req, res, next, noteId) => {
   // 4th is params
   try {
-    // console.log('noteId is Valid?:', mongoose.isValidObjectId(noteId));
-
-    // console.log(req.body)
-    // console.log(req.params)
-
     // check if id's type is mongo-id
-    if (!mongoose.isValidObjectId(noteId)) {
-      return next(new BadRequestError('invalid id'));
+    if (!noteId || !mongoose.isValidObjectId(noteId)) {
+      return next(new BadRequestError('invalid note id'));
     }
 
     const note = await Note.findById(noteId).exec();

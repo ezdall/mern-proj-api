@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const crypto = require('crypto');
 const uuidv1 = require('uuid/v1');
@@ -15,18 +15,18 @@ const userSchema = new Schema(
       unique: true,
       required: true
     },
-    
+
     password: {
       type: String,
       required: true
     },
     salt: String, // for password?
 
-    roles: [{
-      type: String,
-      default: 'Employee'
-    }],
-    
+    roles: {
+      type: [String],
+      default: ['Employee']
+    },
+
     active: {
       type: Boolean,
       default: true
@@ -36,4 +36,4 @@ const userSchema = new Schema(
   { timestamps: true, versionKey: false }
 );
 
-module.exports =  model('User', userSchema)
+module.exports = model('User', userSchema);

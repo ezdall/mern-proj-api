@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const { hash, genSalt} = require('bcrypt')
+const { hash, genSalt } = require('bcrypt');
 const _ = require('lodash');
 
 // model
 const User = require('../models/user.model');
-const Note = require('../models/note.model')
+const Note = require('../models/note.model');
 
 // helper
 const { NotFoundError } = require('../helpers/not-found.error');
@@ -16,17 +16,13 @@ const { BadRequestError } = require('../helpers/bad-request.error');
  * @access Private
  */
 
-const getAllUser = async (req, res, next) => {
+const userList = async (req, res, next) => {
   try {
+    const users = await User.find().select('-password -salt').lean().exec();
 
-    const users = await User.find()
-      .select('-password -salt')
-      .lean()
-      .exec()
-    
     // console.log(users)
-    if(!users?.length){
-      return next(new NotFoundError('Not found users @getAllUser'))
+    if (!users?.length) {
+      return next(new NotFoundError('Not found users @getAllUser'));
     }
 
     // no await?
@@ -34,13 +30,12 @@ const getAllUser = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
-}
+};
 
 // view User
 const readUser = async (req, res, next) => {
   try {
-
-    const user = req.profile.toObject()
+    const user = req.profile.toObject();
     // remove sensitive info, double checking
     user.password = undefined;
     user.salt = undefined;
@@ -52,7 +47,6 @@ const readUser = async (req, res, next) => {
   }
 };
 
-
 /**
  * @desc create a user
  * @route POST /api/users/
@@ -60,34 +54,36 @@ const readUser = async (req, res, next) => {
  */
 
 const createUser = async (req, res, next) => {
-
-  try{
+  try {
     const { username, password, roles } = req.body;
 
     // confirm data
-    if(!username || !password || !Array.isArray(roles) || !roles.length ){
-      return next(new BadRequestError('all info required @createUser'))     
+    if (!username || !password || !Array.isArray(roles) || !roles.length) {
+      return next(new BadRequestError('all info required @createUser'));
     }
 
     // async-hash password
     const salt = await genSalt();
-    const hashPass = await hash(password, salt) 
+    const hashPass = await hash(password, salt);
 
-    const user = await User.create({ username, roles, password: hashPass, salt })
+    const user = await User.create({
+      username,
+      roles,
+      password: hashPass,
+      salt
+    });
 
-  // check if created 201
-  if(!user){
-    return next(new BadRequestError('invalid user @createUser'))
+    // check if created 201
+    if (!user) {
+      return next(new BadRequestError('invalid user @createUser'));
+    }
+    // console.log(user)
+
+    return res.status(201).json({ message: `new user ${username} created!` });
+  } catch (err) {
+    return next(err);
   }
-  // console.log(user)
-
-    return res.status(201).json({ message: `new user ${username} created!` })
-
-  } catch(err){
-
-    return next(err)
-  }
-}
+};
 
 /**
  * @desc update a user
@@ -97,48 +93,47 @@ const createUser = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   try {
-
     // id from req.auth
-    const { id, username, password, roles, active } = req.body
+    const { id, username, password, roles, active } = req.body;
 
-    if(!id){
-      return next(new BadRequestError('id required'))
+    if (!id) {
+      return next(new BadRequestError('id required'));
     }
 
     // const user = req.profile
 
-    const user = await User.findById(id).exec()
+    const user = await User.findById(id).exec();
 
     // console.log(user)
-    if(!user){
-      return next(new NotFoundError('Not found users @updateUser'))
+    if (!user) {
+      return next(new NotFoundError('Not found users @updateUser'));
     }
 
-    if(password){
-     const salt = await genSalt()
-     
-     user.password = await hash(password, salt)
+    if (password) {
+      const salt = await genSalt();
+
+      user.password = await hash(password, salt);
     }
-     
+
     user.username = username || user.username;
     user.roles = roles?.length ? roles : user.roles;
-    user.active = active ?? user.active
+    user.active = active ?? user.active;
 
     // merge + save, the "id" wont enter anyway
-    const updatedUser = await user.save()
+    const updatedUser = await user.save();
 
     // check updatedUser?
 
-    // 
+    //
     updatedUser.password = undefined;
-    updatedUser.salt = undefined
+    updatedUser.salt = undefined;
 
     // no await?
-    return res.json({user: updatedUser});
+    return res.json({ user: updatedUser });
   } catch (error) {
     return next(error);
   }
-}
+};
 
 /**
  * @desc DELETE a user
@@ -147,58 +142,51 @@ const updateUser = async (req, res, next) => {
  */
 
 const deleteUser = async (req, res, next) => {
-
-  try{
-
+  try {
     // de-mount req.profile
     // const user = req.profile
 
-    const { id } = req.body
+    const { id } = req.body;
 
-    if(!id || !mongoose.isValidObjectId(id)){
-      return next(new BadRequestError('valid id is required'))
+    if (!id || !mongoose.isValidObjectId(id)) {
+      return next(new BadRequestError('valid id is required'));
     }
 
     // find note's user
     // ref:'user', type:ObjectId
-    const note = await Note.findOne({ user: id }).lean().exec()
+    const note = await Note.findOne({ user: id }).lean().exec();
 
     // dont delete user with notes
-    if(note){
-      return next(new BadRequestError('this user has notes!'))
+    if (note) {
+      return next(new BadRequestError('this user has notes!'));
     }
 
-    const user = await User.findById(id).exec()
+    const user = await User.findById(id).exec();
 
-    if(!user){
-       return next(new NotFoundError('user not found'))
+    if (!user) {
+      return next(new NotFoundError('user not found'));
     }
 
     // delete itself
-    const result = await user.deleteOne()
-    const reply = `Username ${result.username} w/ ID ${result._id} is deleted`
+    const result = await user.deleteOne();
+    const reply = `Username ${result.username} w/ ID ${result._id} is deleted`;
 
-    return res.json({ msg: reply })
-
-  } catch(err){
-    return next(err)
+    return res.json({ msg: reply });
+  } catch (err) {
+    return next(err);
   }
-
-}
+};
 
 // params
 // :userId --> req.profile
 const userById = async (req, res, next, userId) => {
   // 4th is params??
   try {
-
     // req.param/s?
     // [] check ObjectId
 
     // console.log('arg:', userId);
-    const user = await User.findById(userId)
-      .select('-password -salt')
-      .exec()
+    const user = await User.findById(userId).select('-password -salt').exec();
 
     // console.log('isMongooseObj(user)?:', isMongooseObj(user));
 
@@ -224,4 +212,11 @@ const userById = async (req, res, next, userId) => {
   }
 };
 
-module.exports = { readUser, getAllUser, createUser, updateUser, deleteUser, userById };
+module.exports = {
+  readUser,
+  userList,
+  createUser,
+  updateUser,
+  deleteUser,
+  userById
+};

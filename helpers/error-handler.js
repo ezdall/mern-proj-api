@@ -11,8 +11,8 @@ const errorHandler = (error, req, res, next) => {
     console.error('| ==-- Error-Reason --== |:', errorReason);
   }
 
-  console.error('| ==--- MyErrorStack ---== |:', error.stack);
-  // console.log({ error });
+  // console.error('| ==--- MyErrorStack ---== |:', error.stack);
+  console.log('ErrHandler:', error.toString());
 
   logEvents(
     `${error.name ?? 'Error'}: ${error.message ?? ''}\t${req.method}\t${
@@ -97,9 +97,10 @@ const errorHandler = (error, req, res, next) => {
     return res.status(409).json({ error: `${uniqueVal} already exist` });
   }
 
+  // add isError: true for redux RTK query
   return res
     .status(status)
-    .json({ message: error.toString(), reason: errorReason });
+    .json({ message: error.toString(), reason: errorReason, isError: true });
 };
 
 module.exports = { errorHandler };

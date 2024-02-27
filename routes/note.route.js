@@ -14,15 +14,12 @@ const { requireLogin } = require('../controllers/auth.cont');
 router.use(requireLogin);
 
 // route
-router
-  .route('/notes')
-  .get(noteList)
-  .post(createNote)
-  .patch(updateNote)
-  .delete(deleteNote);
+router.route('/notes').get(noteList).post(createNote);
+
+router.route('/notes/:noteId').patch(updateNote).delete(deleteNote);
 
 // param
-// router.param('noteId', noteById);
+router.param('noteId', noteById);
 
 //  mount
 module.exports = { noteRoute: router };

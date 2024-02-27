@@ -55,21 +55,24 @@ const login = async (req, res, next) => {
         roles: user.roles
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: '11s' } // 1h
+      { expiresIn: '25min' } // 1h
     );
 
     // generate refresh token
     const refreshToken = jwt.sign(
       { username: user.username },
       process.env.REFRESH_SECRET,
-      { expiresIn: '20s' } // 1d
+      { expiresIn: '7d' } // 1d
     );
 
     // persist/cache the refreshToken as 'jwt' in res.cookie with expiry date
-    // why await?
+    // clearCookie must have at-least: secure & sameSite
     res.cookie('jwt', refreshToken, {
       httpOnly: true, // accessible only by webserver
-      maxAge: 7 * 24 * 60 * 60 * 1000 //
+      secure: true, // paired w/ sameSite
+      sameSite: 'None', // for Chrome, & need secure=true
+      maxAge: 7 * 24 * 60 * 60 * 1000, //
+      partitioned: true
     });
 
     // destructure
@@ -89,13 +92,13 @@ const login = async (req, res, next) => {
 
 const refresh = (req, res, next) => {
   const { cookies } = req;
-  // console.log({ cookies });
+  console.log({ cookies });
 
   if (!cookies?.jwt) return next(new UnauthorizedError('no cookies @refresh'));
 
   const refreshToken = cookies.jwt;
 
-  console.log({ refreshToken });
+  // console.log({ refreshToken });
 
   return jwt.verify(
     refreshToken,
@@ -122,11 +125,13 @@ const refresh = (req, res, next) => {
           roles: foundUser.roles
         },
         process.env.ACCESS_SECRET,
-        { expiresIn: '25s' }
+        { expiresIn: '25min' }
       );
       // strip
       foundUser.password = undefined;
       foundUser.salt = undefined;
+
+      console.log('refresh-ed');
 
       return res.json({ accessToken, user: foundUser });
     }
@@ -150,7 +155,13 @@ const logout = async (req, res, next) => {
 
     // clearing
     // sameSite: cause untrackable error
-    res.clearCookie('jwt', { httpOnly: true });
+    res.clearCookie('jwt', {
+      httpOnly: true, // accessible only by webserver
+      secure: true, // paired w/ sameSite
+      sameSite: 'None', // for Chrome, & need secure=true
+      partitioned: true // new addition, jan 2024
+    });
+    console.log('logOut');
 
     return res.sendStatus(204);
   } catch (err) {

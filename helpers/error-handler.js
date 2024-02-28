@@ -14,12 +14,12 @@ const errorHandler = (error, req, res, next) => {
   // console.error('| ==--- MyErrorStack ---== |:', error.stack);
   console.log('ErrHandler:', error.toString());
 
-  logEvents(
-    `${error.name ?? 'Error'}: ${error.message ?? ''}\t${req.method}\t${
-      req.url
-    }\t${req.headers.origin ?? ''}`,
-    'errLog.log'
-  );
+  // logEvents(
+  //   `${error.name ?? 'Error'}: ${error.message ?? ''}\t${req.method}\t${
+  //     req.url
+  //   }\t${req.headers.origin ?? ''}`,
+  //   'errLog.log'
+  // );
 
   // if 'html'
   // if (req.accepts('html')) {
@@ -100,7 +100,7 @@ const errorHandler = (error, req, res, next) => {
   // add isError: true for redux RTK query
   return res
     .status(status)
-    .json({ message: error.toString(), reason: errorReason, isError: true });
+    .json({ message: error.toString(), reason: errorReason });
 };
 
 module.exports = { errorHandler };

@@ -1,7 +1,10 @@
 require('express-async-errors');
-require('dotenv').config({
-  path: './config/config.env'
-});
+require('dotenv').config();
+
+// for local
+// require('dotenv').config({
+//   path: './config/config.env'
+// });
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const helmet = require('helmet');
 
 const { connectMDB } = require('./config/db');
 const { corsOptions } = require('./config/cors-options');
@@ -30,6 +34,7 @@ const PORT = process.env.PORT || 3000;
 
 /** middlewares ----------------------------*/
 app.use(cors(corsOptions));
+// app.use(helmet())
 app.use(morgan('dev'));
 // app.use(logger);
 app.use(express.json()); // bodyParser
@@ -45,7 +50,6 @@ app.use('/api', [authRoute, userRoute, noteRoute]);
 app.all('*', (req, res, next) => {
   const error = new UrlError(`${req.ip} tried to access ${req.originalUrl}`);
 
-  // no need to log
   return next(error);
 });
 
@@ -54,7 +58,7 @@ app.use(errorHandler);
 mongoose.connection.once('open', () => {
   app.listen(PORT, err => {
     if (err) throw err;
-    console.log(`MERN-Proj Server is running on http://localhost:${PORT}`);
+    console.log(`TechFix-Proj Server is running on http://localhost:${PORT}`);
   });
 });
 
@@ -62,4 +66,5 @@ mongoose.connection.on('error', err => {
   console.error('error @mongoo-conn-error ---', err);
 });
 
-module.exports = app;
+// for local
+// module.exports = app;

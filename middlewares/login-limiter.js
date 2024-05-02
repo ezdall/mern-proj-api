@@ -1,5 +1,5 @@
 const rateLimit = require('express-rate-limit');
-const { logEvents } = require('./logger')
+const { logEvents } = require('./logger');
 
 const loginLimiter = rateLimit({
 	windowsMs: 60 * 1000, // 1 min
@@ -10,9 +10,10 @@ const loginLimiter = rateLimit({
 	standardHeaders: true, // return rate limit 'RateLimit-*'
 	legacyHeaders: false, // disable 'X-RateLimit-*'
 	handler(req, res, next, opts) {
-		logEvents(`Too many request: ${opts.message.message}\t${req.method}\t${req.url}\t${req.headers.origin || ''}`, 'errLog.log')
-		return res.status(opts.statusCode).json(opts.message)
-	}
-})
+		// logEvents(`Too many request: ${opts.message.message}\t${req.method}\t${req.url}\t${req.headers.origin || ''}`, 'errLog.log')
 
-module.exports = { loginLimiter }
+		return res.status(opts.statusCode).json(opts.message);
+	}
+});
+
+module.exports = { loginLimiter };

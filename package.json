@@ -1,6 +1,8 @@
 {
   "name": "mern-proj-api",
-  "version": "1.0.0",
+  "description":"project - TechFix Solutions api(server)",
+  "private":"false",
+  "version": "1.0",
   "main": "server.js",
   "dependencies": {
     "bcrypt": "5.0.1",

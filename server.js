@@ -43,6 +43,11 @@ app.use(cookieParser());
 
 // app.use('/dist', express.static(path.join(__dirname, 'views')));
 
+app.use(
+  '/favicon.ico',
+  express.static(path.join(__dirname, 'views', 'favicon.ico'))
+);
+
 app.use('/', rootRoute);
 
 app.use('/api', [authRoute, userRoute, noteRoute]);
@@ -58,7 +63,7 @@ app.use(errorHandler);
 mongoose.connection.once('open', () => {
   app.listen(PORT, err => {
     if (err) throw err;
-    console.log(`TechFix-Proj Server is running on http://localhost:${PORT}`);
+    console.log(`TechFix-Proj Server is running on ${PORT}`);
   });
 });
 

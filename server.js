@@ -61,9 +61,16 @@ app.all('*', (req, res, next) => {
 app.use(errorHandler);
 
 mongoose.connection.once('open', () => {
+  const isProd = process.env.NODE_ENV === 'production';
+
+  const nodeEnv = isProd ? 'PROD' : 'DEV';
+  const hostNamePort = isProd
+    ? 'techfixs-api.onrender.com'
+    : `localhost:${PORT}`;
+
   app.listen(PORT, err => {
     if (err) throw err;
-    console.log(`TechFix-Proj Server is running on ${PORT}`);
+    console.log(`TechFix-Srv -${nodeEnv}- running at ${hostNamePort}`);
   });
 });
 

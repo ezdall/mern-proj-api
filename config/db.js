@@ -1,8 +1,15 @@
 const mongoose = require('mongoose');
 
 async function connectMDB() {
+  const { MONGO_URI_FIXTECH_PROD, MONGO_URI_FIXTECH_DEV, NODE_ENV } =
+    process.env;
+
+  // use local-uri, if null or 'development'
+  const connectionString =
+    NODE_ENV === 'production' ? MONGO_URI_FIXTECH_PROD : MONGO_URI_FIXTECH_DEV;
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI_FIXTECH_R, {
+    const conn = await mongoose.connect(connectionString, {
       useNewUrlParser: true,
       useCreateIndex: true,
       useUnifiedTopology: true,
@@ -15,7 +22,9 @@ async function connectMDB() {
       `MongoDB Connected: ${host}:${port}/${name} pid:${process.pid}`
     );
   } catch (error) {
-    console.error(`Error-at-Connection: ${error.stack}`);
+    console.error('Error-at-DB-Connection:');
+    console.error(error);
+
     process.exit(0); // exit 0-to clean exit, 1- app crash
   }
 }

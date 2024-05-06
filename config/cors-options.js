@@ -1,7 +1,11 @@
 const allowedOrigins = [
+  // local
   'http://localhost:3000',
   'http://localhost:5000', // react
   'http://127.0.0.1:5173', // vite
+
+  // remote
+  'https://techfixs-app.onrender.com',
 
   // no internet
   'null'

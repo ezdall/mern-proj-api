@@ -1,15 +1,24 @@
 const mongoose = require('mongoose');
 
 async function connectMDB() {
-  const { MONGO_URI_FIXTECH_PROD, MONGO_URI_FIXTECH_DEV, NODE_ENV } =
-    process.env;
+  const {
+    MONGO_URI_FIXTECH_PROD,
+    MONGO_URI_FIXTECH_DEV,
+    MONGO_URI_TEST,
+    NODE_ENV
+  } = process.env;
 
-  // use local-uri, if null or 'development'
-  const connectionString =
-    NODE_ENV === 'production' ? MONGO_URI_FIXTECH_PROD : MONGO_URI_FIXTECH_DEV;
+  let mongoUri;
 
+  if (NODE_ENV === 'production') {
+    mongoUri = MONGO_URI_FIXTECH_PROD;
+  } else if (NODE_ENV === 'test') {
+    mongoUri = MONGO_URI_TEST;
+  } else {
+    mongoUri = MONGO_URI_FIXTECH_DEV;
+  }
   try {
-    const conn = await mongoose.connect(connectionString, {
+    const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useCreateIndex: true,
       useUnifiedTopology: true,
@@ -18,14 +27,16 @@ async function connectMDB() {
 
     const { name, host, port } = conn.connection;
 
-    console.log(
-      `MongoDB Connected: ${host}:${port}/${name} pid:${process.pid}`
-    );
+    if (NODE_ENV !== 'test') {
+      console.log(
+        `MongoDB Connected: ${host}:${port}/${name} pid:${process.pid}`
+      );
+    }
   } catch (error) {
     console.error('Error-at-DB-Connection:');
     console.error(error);
 
-    process.exit(0); // exit 0-to clean exit, 1- app crash
+    process.exit(0); // exit 0-to clean exit, 1- to explicit error
   }
 }
 

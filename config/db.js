@@ -40,4 +40,8 @@ async function connectMDB() {
   }
 }
 
-module.exports = { connectMDB };
+async function mongoDisconnect() {
+  await mongoose.disconnect();
+}
+
+module.exports = { connectMDB, mongoDisconnect };

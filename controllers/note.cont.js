@@ -6,8 +6,8 @@ const User = require('../models/user.model');
 const Note = require('../models/note.model');
 
 // helper
-const { NotFoundError } = require('../helpers/not-found.error');
-const { BadRequestError } = require('../helpers/bad-request.error');
+const { Unauthorized401 } = require('../helpers/unauthorized.error');
+const { BadRequest400 } = require('../helpers/bad-request.error');
 
 /**
  * @desc create a note
@@ -31,12 +31,12 @@ const createNote = async (req, res, next) => {
     const user = await User.findById(userId).lean().exec();
 
     if (!user) {
-      return next(new NotFoundError('User not found'));
+      return next(new Unauthorized401('User not found'));
     }
 
     // confirm data
     if (!title || !text) {
-      return next(new BadRequestError('all info required'));
+      return next(new BadRequest400('all info required'));
     }
 
     // spread, ObjectId as user
@@ -45,7 +45,7 @@ const createNote = async (req, res, next) => {
     // check if created, 201
     if (!note) {
       // if error occur at database
-      return next(new BadRequestError('invalid note'));
+      return next(new BadRequest400('invalid note'));
     }
 
     // created
@@ -72,9 +72,8 @@ const noteList = async (req, res, next) => {
       .lean()
       .exec();
 
-    // !notes?.length - new syntax nodejs-14+
-    if (!notes?.length) {
-      return next(new NotFoundError('no notes'));
+    if (!notes) {
+      return next(new BadRequest400('no notes'));
     }
 
     // console.log({ notes });
@@ -116,13 +115,13 @@ const updateNote = async (req, res, next) => {
     // console.log(req.note)
 
     if (!id || !mongoose.isValidObjectId(id)) {
-      return next(new BadRequestError('valid id is required'));
+      return next(new Unauthorized401('valid id is required'));
     }
 
     let note = await Note.findById(id).exec();
 
     if (!note) {
-      return next(new NotFoundError('note not found!'));
+      return next(new BadRequest400('note not found!'));
     }
 
     note = _.extend(note, req.body);
@@ -131,13 +130,13 @@ const updateNote = async (req, res, next) => {
 
     // confirm field
     if (!title || !text || typeof completed !== 'boolean') {
-      return next(new BadRequestError('all valid field is required'));
+      return next(new BadRequest400('all valid field is required'));
     }
 
     // save update
-    const updateNote = await note.save();
+    const updNote = await note.save();
 
-    return res.json({ msg: `${updateNote.title} updated!` });
+    return res.json({ message: `${updNote.title} updated!` });
   } catch (error) {
     return next(error);
   }
@@ -151,23 +150,22 @@ const updateNote = async (req, res, next) => {
 
 const deleteNote = async (req, res, next) => {
   try {
-    // de-mount
+    // de-mount ?
     // const note = req.note
 
     const { id } = req.body;
 
     if (!id) {
-      return next(new BadRequestError('id is required'));
+      return next(new Unauthorized401('id is required'));
     }
 
     const note = await Note.findById(id).exec();
     // delete note itself
     const result = await note.deleteOne();
 
-    console.log(result);
     const reply = `Note ${result.title} w/ ID ${result._id} is deleted`;
 
-    return res.json({ msg: reply });
+    return res.json({ message: reply });
   } catch (err) {
     return next(err);
   }
@@ -180,16 +178,13 @@ const noteById = async (req, res, next, noteId) => {
   try {
     // check if id's type is mongo-id
     if (!noteId || !mongoose.isValidObjectId(noteId)) {
-      return next(new BadRequestError('invalid note id'));
+      return next(new Unauthorized401('invalid note id'));
     }
 
     const note = await Note.findById(noteId).exec();
 
-    // console.log('isMongooseObj(user)?:', isMongooseObj(note));
-
     if (!note) {
-      // return res.status(400) ?? vs throw error?
-      return next(new NotFoundError('Note doesnt exist'));
+      return next(new BadRequest400('Note doesnt exist'));
     }
 
     // mount to req.note
@@ -197,8 +192,6 @@ const noteById = async (req, res, next, noteId) => {
 
     return next();
   } catch (error) {
-    // possible error
-    // not found - id not found
     return next(error);
   }
 };

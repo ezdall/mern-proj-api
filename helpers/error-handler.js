@@ -12,7 +12,9 @@ const errorHandler = (error, req, res, next) => {
   }
 
   // console.error('| ==--- MyErrorStack ---== |:', error.stack);
-  console.log('ErrHandler:', error.toString());
+  console.log({
+    ...error
+  });
 
   // logEvents(
   //   `${error.name ?? 'Error'}: ${error.message ?? ''}\t${req.method}\t${
@@ -50,7 +52,7 @@ const errorHandler = (error, req, res, next) => {
   // redundant error.name??
   if (error.name === 'UnauthorizedError') {
     return res.status(401).json({
-      error: `${error.name} : ${error.message}`
+      message: `${error.name} : ${error.message}`
     });
   }
 
@@ -62,39 +64,47 @@ const errorHandler = (error, req, res, next) => {
     console.log('--ValidatorError--');
   }
 
-  if (error.name === 'ValidationError') {
-    console.log('--Validation Error--');
-  }
-
   if (error.name === 'MongooseError') {
     console.log('--Mongoose Error--');
   }
 
   if (error.name === 'UrlError') {
     return res.status(404).json({
-      error: `cannot do ${req.method} on ${req.url}`
+      message: `cannot do ${req.method} on ${req.url}`
     });
   }
 
   // bad request
   if (error.statusCode === 400) {
     return res.status(400).json({
-      error: `${error.name} : ${error.message}`
+      message: `${error.name} : ${error.message}`
     });
   }
 
   if (error.statusCode === 404) {
     return res.status(404).json({
-      error: `${error.name} : ${error.message}`
+      message: `${error.name} : ${error.message}`
     });
   }
 
-  // mongoose Error, duplicate
-  if (error.name === 'MongoError' && error.code === (11000 || 11001)) {
+  if (['TokenExpiredError', 'JsonWebTokenError'].includes(error.name)) {
+    return res.status(401).json({
+      message: error.message
+    });
+  }
+
+  // mongoose Error, duplicate 409
+  if (error.name === 'MongoError' && [11000, 11001].includes(error.code)) {
     const uniqueVal = Object.values(error.keyValue);
 
     // console.log(getUniqueErrorMessage(error))
-    return res.status(409).json({ error: `${uniqueVal} already exist` });
+    return res.status(409).json({ message: `${uniqueVal} already exist` });
+  }
+
+  if (error.name === 'ValidationError') {
+    return res.status(400).json({
+      message: 'validation error'
+    });
   }
 
   // add isError: true for redux RTK query

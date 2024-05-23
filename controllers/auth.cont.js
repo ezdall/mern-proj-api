@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const expressJwt = require('express-jwt');
 const { compare } = require('bcrypt');
@@ -6,13 +5,12 @@ const _ = require('lodash');
 
 // model
 const User = require('../models/user.model');
-const Note = require('../models/note.model');
+// const Note = require('../models/note.model');
 
 // helper
-const { NotFoundError } = require('../helpers/not-found.error');
-const { BadRequestError } = require('../helpers/bad-request.error');
-const { UnauthorizedError } = require('../helpers/unauthorized.error');
-const { ForbiddenError } = require('../helpers/forbidden.error');
+const { BadRequest400 } = require('../helpers/bad-request.error');
+const { Unauthorized401 } = require('../helpers/unauthorized.error');
+const { Forbidden403 } = require('../helpers/forbidden.error');
 
 /**
  * @desc Login
@@ -25,25 +23,25 @@ const login = async (req, res, next) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return next(new BadRequestError('all field required @login'));
+      return next(new BadRequest400('all field required @login'));
     }
 
     // exec bcoz we need to validatePassword
     const user = await User.findOne({ username }).exec();
 
     if (!user) {
-      return next(new NotFoundError('User not found'));
+      return next(new Unauthorized401('User not found'));
     }
 
     // check if other person is using this 'user login'
     if (!user?.active) {
-      return next(new UnauthorizedError('Unauthorized!'));
+      return next(new Unauthorized401('Unauthorized!'));
     }
 
     const passMatch = await compare(password, user.password);
 
     if (typeof passMatch !== 'boolean' || !passMatch) {
-      return next(new UnauthorizedError('wrong password @login'));
+      return next(new Unauthorized401('wrong password @login'));
     }
 
     console.log('password & username match ----- ');
@@ -92,9 +90,9 @@ const login = async (req, res, next) => {
 
 const refresh = (req, res, next) => {
   const { cookies } = req;
-  console.log({ cookies });
+  // console.log({ cookies });
 
-  if (!cookies?.jwt) return next(new UnauthorizedError('no cookies @refresh'));
+  if (!cookies?.jwt) return next(new Unauthorized401('no cookies @refresh'));
 
   const refreshToken = cookies.jwt;
 
@@ -105,9 +103,8 @@ const refresh = (req, res, next) => {
     process.env.REFRESH_SECRET,
     async (err, decoded) => {
       if (err) {
-        console.log('err-refresh:', err.message);
-        // return next(err); // token expired 500
-        return next(new ForbiddenError('Forbidden! @refresh'));
+        return next(err); // token expired 403? or 401?
+        // return next(new Forbidden403(`Forbidden! ${err.message}`))
       }
 
       const foundUser = await User.findOne({
@@ -116,8 +113,7 @@ const refresh = (req, res, next) => {
         .lean()
         .exec(); // why not lean vs toObject()
 
-      if (!foundUser)
-        return next(new UnauthorizedError('not found @refresh 2'));
+      if (!foundUser) return next(new Unauthorized401('not found @refresh 2'));
 
       const accessToken = jwt.sign(
         {
@@ -146,14 +142,10 @@ const refresh = (req, res, next) => {
  * @access Public
  */
 
-const logout = async (req, res, next) => {
+const logout = (req, res, next) => {
   try {
-    // de-mount
-    const { cookies } = req;
+    // if (!req.cookies?.jwt) return res.sendStatus(204); // unnecessary
 
-    if (!cookies?.jwt) return res.sendStatus(204); // no content
-
-    // clearing
     // sameSite: cause untrackable error
     res.clearCookie('jwt', {
       httpOnly: true, // accessible only by webserver
@@ -161,7 +153,6 @@ const logout = async (req, res, next) => {
       sameSite: 'None', // for Chrome, & need secure=true
       partitioned: true // new addition, jan 2024
     });
-    console.log('logOut');
 
     return res.sendStatus(204);
   } catch (err) {

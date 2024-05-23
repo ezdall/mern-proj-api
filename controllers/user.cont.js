@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 const { hash, genSalt } = require('bcrypt');
-const _ = require('lodash');
 
 // model
 const User = require('../models/user.model');
 const Note = require('../models/note.model');
 
 // helper
-const { NotFoundError } = require('../helpers/not-found.error');
-const { BadRequestError } = require('../helpers/bad-request.error');
+const { Unauthorized401 } = require('../helpers/unauthorized.error');
+const { BadRequest400 } = require('../helpers/bad-request.error');
 
 /**
  * @desc GET all users
@@ -21,8 +20,8 @@ const userList = async (req, res, next) => {
     const users = await User.find().select('-password -salt').lean().exec();
 
     // console.log(users)
-    if (!users?.length) {
-      return next(new NotFoundError('Not found users @getAllUser'));
+    if (!users) {
+      return next(new BadRequest400('Not found users @getAllUser'));
     }
 
     // no await?
@@ -59,7 +58,7 @@ const createUser = async (req, res, next) => {
 
     // confirm data
     if (!username || !password || !Array.isArray(roles) || !roles.length) {
-      return next(new BadRequestError('all info required @createUser'));
+      return next(new BadRequest400('all info required @createUser'));
     }
 
     // async-hash password
@@ -75,7 +74,7 @@ const createUser = async (req, res, next) => {
 
     // check if created 201
     if (!user) {
-      return next(new BadRequestError('invalid user @createUser'));
+      return next(new BadRequest400('invalid user @createUser'));
     }
     // console.log(user)
 
@@ -97,7 +96,7 @@ const updateUser = async (req, res, next) => {
     const { id, username, password, roles, active } = req.body;
 
     if (!id) {
-      return next(new BadRequestError('id required'));
+      return next(new BadRequest400('id required'));
     }
 
     // const user = req.profile
@@ -106,7 +105,7 @@ const updateUser = async (req, res, next) => {
 
     // console.log(user)
     if (!user) {
-      return next(new NotFoundError('Not found users @updateUser'));
+      return next(new Unauthorized401('Not found users @updateUser'));
     }
 
     if (password) {
@@ -149,7 +148,7 @@ const deleteUser = async (req, res, next) => {
     const { id } = req.body;
 
     if (!id || !mongoose.isValidObjectId(id)) {
-      return next(new BadRequestError('valid id is required'));
+      return next(new Unauthorized401('valid id is required'));
     }
 
     // find note's user
@@ -158,20 +157,21 @@ const deleteUser = async (req, res, next) => {
 
     // dont delete user with notes
     if (note) {
-      return next(new BadRequestError('this user has notes!'));
+      return next(new BadRequest400('this user has notes!'));
     }
 
     const user = await User.findById(id).exec();
 
     if (!user) {
-      return next(new NotFoundError('user not found'));
+      return next(new Unauthorized401('user not found'));
     }
 
     // delete itself
     const result = await user.deleteOne();
-    const reply = `Username ${result.username} w/ ID ${result._id} is deleted`;
 
-    return res.json({ msg: reply });
+    return res.json({
+      message: `Username ${result.username} w/ ID ${result._id} is deleted`
+    });
   } catch (err) {
     return next(err);
   }
@@ -192,7 +192,7 @@ const userById = async (req, res, next, userId) => {
 
     if (!user) {
       // return res.status(400) ?? vs throw error?
-      return next(new NotFoundError('User not Found @userById'));
+      return next(new Unauthorized401('User not Found @userById'));
     }
 
     // destructing, will convert its mongooseObj- into js-obj

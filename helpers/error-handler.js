@@ -94,7 +94,9 @@ const errorHandler = (error, req, res, next) => {
   }
 
   // mongoose Error, duplicate 409
-  if (error.name === 'MongoError' && [11000, 11001].includes(error.code)) {
+  if (error.name === 'MongoError' && [11_000, 11_001].includes(error.code)) {
+    console.log('--MongoError--');
+
     const uniqueVal = Object.values(error.keyValue);
 
     // console.log(getUniqueErrorMessage(error))

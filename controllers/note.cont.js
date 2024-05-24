@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const _ = require('lodash');
+const _extend = require('lodash/extend');
 
 // model
 const User = require('../models/user.model');
@@ -24,10 +24,13 @@ const createNote = async (req, res, next) => {
     // const username = req.profile
 
     // confirm if user is ObjectId
+    if (!userId || !mongoose.isValidObjectId(userId)) {
+      return next(new Unauthorized401('valid id is required'));
+    }
 
     // do login first,
     // de-mount req.user / req.profile
-    // get ObjectId of user
+
     const user = await User.findById(userId).lean().exec();
 
     if (!user) {
@@ -49,7 +52,7 @@ const createNote = async (req, res, next) => {
     }
 
     // created
-    return res.status(201).json({ msg: note });
+    return res.status(201).json({ note });
   } catch (err) {
     return next(err);
   }
@@ -73,7 +76,7 @@ const noteList = async (req, res, next) => {
       .exec();
 
     if (!notes) {
-      return next(new BadRequest400('no notes'));
+      return next(new BadRequest400('error at notes'));
     }
 
     // console.log({ notes });
@@ -107,24 +110,23 @@ const updateNote = async (req, res, next) => {
   try {
     // current note, de-mount deq.note from noteById
 
-    const { id } = req.body;
+    // const { id } = req.body;
 
-    // let note = req.note
+    let { note } = req;
 
-    // console.log(req.body)
-    // console.log(req.note)
+    // req.param handle id
+    // if (!id || !mongoose.isValidObjectId(id)) {
+    //   return next(new Unauthorized401('valid id is required'));
+    // }
 
-    if (!id || !mongoose.isValidObjectId(id)) {
-      return next(new Unauthorized401('valid id is required'));
-    }
-
-    let note = await Note.findById(id).exec();
+    // replace by req.note
+    // let note = await Note.findById(id).exec();
 
     if (!note) {
       return next(new BadRequest400('note not found!'));
     }
 
-    note = _.extend(note, req.body);
+    note = _extend(note, req.body);
 
     const { title, text, completed } = note;
 
@@ -150,16 +152,21 @@ const updateNote = async (req, res, next) => {
 
 const deleteNote = async (req, res, next) => {
   try {
-    // de-mount ?
-    // const note = req.note
+    // de-mount
+    const { note } = req;
 
-    const { id } = req.body;
+    // const { id } = req.body;
 
-    if (!id) {
-      return next(new Unauthorized401('id is required'));
+    // if (!id) {
+    //   return next(new Unauthorized401('id is required'));
+    // }
+
+    // const note = await Note.findById(id).exec();
+
+    if (!note) {
+      return next(new BadRequest400('note not found!'));
     }
 
-    const note = await Note.findById(id).exec();
     // delete note itself
     const result = await note.deleteOne();
 
